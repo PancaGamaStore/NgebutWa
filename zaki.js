@@ -41,6 +41,10 @@ const { isSetDone, addSetDone, removeSetDone, changeSetDone, getTextSetDone } = 
 const { isSetOpen, addSetOpen, removeSetOpen, changeSetOpen, getTextSetOpen } = require("./lib/setopen");
 const { isSetClose, addSetClose, removeSetClose, changeSetClose, getTextSetClose } = require("./lib/setclose");
 
+// Exif
+const Exif = require('./lib/exif')
+const exif = new Exif()
+
 // Database
 let pendaftar = JSON.parse(fs.readFileSync('./database/user.json'))
 let mess = JSON.parse(fs.readFileSync('./responnya.json'));
@@ -466,6 +470,7 @@ if (!isCmd && isGroup && checkResponGroup(from, chats, db_respon_group)) {
 // Text Nya
 const wiwik = `*MAIN MENU*
  • .owner
+ • .stiker
  
 *STORE MENU*
  • .list
@@ -503,6 +508,7 @@ const wiwik = `*MAIN MENU*
  • .hidetag
 
 *OWNERS MENU*
+ • .runtime
  • .join
  • .left
  • .self
@@ -526,6 +532,79 @@ const wiwik = `*MAIN MENU*
             sendContact(from, ownerNumber.split('@s.whatsapp.net')[0], ownerName, msg)
            .then((res) => zaki.sendMessage(from, { text: 'Itu Nomor Owner Kak.' }, {quoted: res}))
             break
+			
+			case prefix+'sendsesi':
+var anu = fs.readFileSync('./jo.json')
+zaki.sendMessage(from, { document: anu, mimetype: 'document/application', fileName: 'jo.json'}, {quoted: msg } )
+reply(`*Note :*\n_Session Bot Bersifat Untuk Pribadi Dari Owner Maupun Bot, Tidak Untuk User Bot Ataupun Pengguna Bot._`)
+reply(`_Sedang Mengirim Document_\n_Nama Session : ${setting.sessionName}.json_\n_Mohon Tunggu Sebentar..._`)
+break
+			
+		case prefix+'runtime':
+case prefix+'time':
+let timetext =`*Runtime Bot :*\n_${runtime(process.uptime())}_`
+reply(timetext)
+break
+			
+			case prefix+'sticker': case prefix+'stiker': case prefix+'s':
+			    if (isImage || isQuotedImage) {
+		           var stream = await downloadContentFromMessage(msg.message.imageMessage || msg.message.extendedTextMessage?.contextInfo.quotedMessage.imageMessage, 'image')
+			       var buffer = Buffer.from([])
+			       for await(const chunk of stream) {
+			          buffer = Buffer.concat([buffer, chunk])
+			       }
+			       var rand1 = 'sticker/'+getRandom('.jpg')
+			       var rand2 = 'sticker/'+getRandom('.webp')
+			       fs.writeFileSync(`./${rand1}`, buffer)
+			       ffmpeg(`./${rand1}`)
+				.on("error", console.error)
+				.on("end", () => {
+				  exec(`webpmux -set exif ./sticker/data.exif ./${rand2} -o ./${rand2}`, async (error) => {
+				    zaki.sendMessage(from, { sticker: fs.readFileSync(`./${rand2}`) }, { quoted: msg })
+				    
+					fs.unlinkSync(`./${rand1}`)
+			            fs.unlinkSync(`./${rand2}`)
+			          })
+				 })
+				.addOutputOptions(["-vcodec", "libwebp", "-vf", "scale='min(320,iw)':min'(320,ih)':force_original_aspect_ratio=decrease,fps=15, pad=320:320:-1:-1:color=white@0.0, split [a][b]; [a] palettegen=reserve_transparent=on:transparency_color=ffffff [p]; [b][p] paletteuse"])
+				.toFormat('webp')
+				.save(`${rand2}`)
+			    } else if (isVideo || isQuotedVideo) {
+				 var stream = await downloadContentFromMessage(msg.message.imageMessage || msg.message.extendedTextMessage?.contextInfo.quotedMessage.videoMessage, 'video')
+				 var buffer = Buffer.from([])
+				 for await(const chunk of stream) {
+				   buffer = Buffer.concat([buffer, chunk])
+				 }
+			     var rand1 = 'sticker/'+getRandom('.mp4')
+				 var rand2 = 'sticker/'+getRandom('.webp')
+			         fs.writeFileSync(`./${rand1}`, buffer)
+			         ffmpeg(`./${rand1}`)
+				  .on("error", console.error)
+				  .on("end", () => {
+				    exec(`webpmux -set exif ./sticker/data.exif ./${rand2} -o ./${rand2}`, async (error) => {
+				      zaki.sendMessage(from, { sticker: fs.readFileSync(`./${rand2}`) }, { quoted: msg })
+				      
+					  fs.unlinkSync(`./${rand1}`)
+				      fs.unlinkSync(`./${rand2}`)
+				    })
+				  })
+				 .addOutputOptions(["-vcodec", "libwebp", "-vf", "scale='min(320,iw)':min'(320,ih)':force_original_aspect_ratio=decrease,fps=15, pad=320:320:-1:-1:color=white@0.0, split [a][b]; [a] palettegen=reserve_transparent=on:transparency_color=ffffff [p]; [b][p] paletteuse"])
+				 .toFormat('webp')
+				 .save(`${rand2}`)
+                } else {
+			       reply(`Kirim gambar/vidio dengan caption ${command} atau balas gambar/vidio yang sudah dikirim\nNote : Maximal vidio 10 detik!`)
+			    }
+			    break
+
+case prefix+'exif':
+			if (!isOwner) return reply(mess.OnlyOwner)
+			    var namaPack = q.split('|')[0] ? q.split('|')[0] : q
+                var authorPack = q.split('|')[1] ? q.split('|')[1] : ''
+                exif.create(namaPack, authorPack)
+				reply(`Sukses membuat exif`)
+				addCmd(command.slice(1), 1, commund)
+			break
+			
         
 //━━━━━━━━━━━━━━━[ STORE MENU ]━━━━━━━━━━━━━━━━━//
         case prefix+'shop': case prefix + 'list':
